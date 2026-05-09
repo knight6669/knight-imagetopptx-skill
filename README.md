@@ -105,6 +105,12 @@
 - asset contact sheet
 - grid alignment report
 
+### 6. 多页输入逐页独立复刻
+
+当输入是多张图片、图片版 PPTX 或 PDF 时，每一页都必须按独立单页规格严格复刻，并单独渲染、对比、裁图 QA 和修正。
+
+最终交付不是一堆零散文件，而是按原始顺序拼接成一个完整的可编辑多页 PPTX。
+
 ## 图像资产规则
 
 ### 生成资产联系图
@@ -144,13 +150,14 @@
 
 ```mermaid
 flowchart LR
-  A["Input: PNG/JPG/PPTX screenshot"] --> B["Inventory: text, shapes, tables, icons"]
-  B --> C["Classify: native_editable / imagegen_asset"]
-  C --> D["Generate and post-process transparent assets"]
-  D --> E["Rebuild with native PPT objects"]
-  E --> F["Render to PNG"]
-  F --> G["Crop QA and iterate"]
-  G --> H["Editable PPTX deliverable"]
+  A["Input: image / image-only PPTX / PDF"] --> B["Render or order pages"]
+  B --> C["Per-page inventory"]
+  C --> D["Classify: native_editable / imagegen_asset"]
+  D --> E["Generate and post-process transparent assets"]
+  E --> F["Rebuild each page with native PPT objects"]
+  F --> G["Render every slide to PNG"]
+  G --> H["Crop QA and iterate page-by-page"]
+  H --> I["Merge into one editable PPTX"]
 ```
 
 ## 安装
@@ -182,6 +189,13 @@ git clone https://github.com/<your-name>/knight-imagetopptx-skill "$env:CODEX_HO
 - 图片版 PPTX，也就是每页都是截图或整页图片的 PowerPoint
 - PDF 页面，例如导出的汇报 PDF、扫描版或图片型 PDF
 - 已渲染的 slide page，需要重建为可编辑对象
+
+多页输入规则：
+
+- 每一页都按独立单页复刻，不偷懒套模板
+- 每一页都要单独渲染对比和局部裁图检查
+- 修正完成后按原始顺序合并成一个 `.pptx`
+- 默认交付一个多页可编辑 PPTX，而不是多个零散 PPTX
 
 示例：
 
