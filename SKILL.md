@@ -11,6 +11,7 @@ Use this only for **existing visual slides**:
 
 - A PNG/JPG/WebP slide image that must become editable PowerPoint.
 - A PPTX whose slides are image-only screenshots or generated full-page images.
+- A PDF or multi-page image set where each page must become an editable PowerPoint slide.
 - A rendered slide page that needs editable text, containers, arrows, icons, and layout objects.
 
 Do not use this for creating a new deck from scratch, SVG-only conversion, or simple image packaging where the user does not need object-level editing.
@@ -40,8 +41,10 @@ If the image generation tool is unavailable, blocked, or fails repeatedly, stop 
 
 1. **Prepare input**
    - Create a working folder beside the source, e.g. `editable-replica-XX/`.
-   - If the input is image-only PPTX, render/export each slide to PNG first and treat each page as a reference image.
-   - Record slide size, aspect ratio, source filenames, and output path.
+   - If the input is image-only PPTX or PDF, render/export each page/slide to PNG first and treat each rendered page as a reference image.
+   - If the input is multiple images, preserve their order and treat each image as one target slide.
+   - Record slide size, aspect ratio, source filenames/page numbers, and output path.
+   - For multi-page inputs, each page is an independent single-slide rebuild task. Do not build page 2 by copying page 1 and making rough edits unless the visual page is genuinely repeated and the render check confirms it.
 
 2. **Inventory the page**
    - Build a visual inventory: title/subtitle/body text, cards, panels, containers, arrows, connectors, icons, labels, footers, backgrounds.
@@ -81,6 +84,12 @@ If the image generation tool is unavailable, blocked, or fails repeatedly, stop 
    - Iterate on obvious mismatches: icon clipping, icon size, arrow direction, text wrapping, card borders, alignment, and spacing.
    - Crop crowded regions for QA, not only the full slide. Save 1:1 PNG crops for bottom tags, dense cards, circular diagrams, right-side tool panels, feedback bars, and any selected-object complaints.
    - For every tight icon slot, especially button/tool/UI icons, render a 1:1 local crop of the inserted PPT region. Asset thumbnails are not enough: verify the final rendered PPT does not show clipped edges, stray fragments, or adjacent-cell debris.
+   - For multi-page inputs, render and compare every rebuilt slide against its own source page. Fix mismatches page-by-page before final delivery.
+
+6. **Assemble multi-page output**
+   - For multiple source images/pages, append all independently rebuilt slides into one `.pptx` in the original order.
+   - Keep per-page assets, manifests, rendered previews, and QA crops traceable by slide/page number.
+   - Do not deliver separate PPTX files unless the user explicitly asks; the default deliverable is one combined editable PPTX.
 
 ## Implementation Patterns
 
@@ -93,7 +102,7 @@ If the image generation tool is unavailable, blocked, or fails repeatedly, stop 
 - **Local crop QA:** after rendering, crop suspicious regions with PIL and inspect them separately. Do this before final delivery when a slide has tight labels, right-side tool grids, or bottom feedback bars.
 - **Asset manifest proof:** include for every `imagegen_asset` its prompt summary, generated source path when available, final PNG path, and any cleanup/cutting operation. If an asset has no image-generation source, it is not a valid final icon/complex asset.
 
-6. **Validate before delivery**
+7. **Validate before delivery**
    - Run the bundled helper:
 
 ```bash
