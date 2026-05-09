@@ -1,0 +1,4 @@
+interface:
+  display_name: "Knight Image to PPTX"
+  short_description: "Rebuild slide images as editable PowerPoint files"
+  default_prompt: "Use $knight-imagetopptx-skill to rebuild this image or image-only PPTX as an editable PowerPoint deck."
