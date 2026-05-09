@@ -11,7 +11,7 @@
 <p align="center">
   <a href="#skill-定位"><img alt="Codex Skill" src="https://img.shields.io/badge/Codex-Skill-0052C4?style=for-the-badge" /></a>
   <a href="#图像资产规则"><img alt="ImageGen Assets" src="https://img.shields.io/badge/Assets-ImageGen%20PNG-111827?style=for-the-badge" /></a>
-  <a href="#质量门禁"><img alt="Render QA" src="https://img.shields.io/badge/QA-Render%20First-0F766E?style=for-the-badge" /></a>
+  <a href="#质量约束"><img alt="Render QA" src="https://img.shields.io/badge/QA-Render%20First-0F766E?style=for-the-badge" /></a>
   <a href="#许可"><img alt="MIT License" src="https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge" /></a>
 </p>
 
@@ -102,7 +102,7 @@ skill使用通用 `C×R` 规则网格对齐：
 
 ### Rebuild Protocol
 
-| 阶段 | Codex 执行内容 | 质量门禁 |
+| 阶段 | Codex 执行内容 | 质量约束 |
 | --- | --- | --- |
 | 01 · 输入规整 | 接收图片、图片版 PPTX 或 PDF；渲染/排序为逐页参考图 | 记录页码、尺寸、比例、源文件 |
 | 02 · 视觉盘点 | 拆出标题、正文、表格、卡片、按钮、箭头、图标、背景区域 | 为每个非文本对象分配稳定 asset id |
@@ -236,7 +236,7 @@ knight-imagetopptx-skill/
    └─ new_sheet_projection_runs.png
 ```
 
-## 质量门禁
+## 质量约束
 
 ```bash
 python scripts/check_rebuild_assets.py --asset-dir path/to/assets
