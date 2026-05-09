@@ -49,12 +49,6 @@
 | <img src="assets/原图1.png" alt="Source slide 1" /> | <img src="assets/效果1.png" alt="Rebuilt editable PPT effect 1" /> |
 | <img src="assets/原图2.png" alt="Source slide 2" /> | <img src="assets/效果2.png" alt="Rebuilt editable PPT effect 2" /> |
 
-### 对比预览
-
-<p align="center">
-  <img src="assets/comparison.png" alt="Reference and rebuilt PPT comparison" width="100%" />
-</p>
-
 ### 元素可编辑状态
 
 复刻结果保留对象级编辑能力：文本、表格、卡片、按钮、图标和复杂视觉资产都可以在 PowerPoint 中独立选中、移动和二次调整。
