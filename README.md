@@ -69,7 +69,7 @@
 - 流程箭头/连接线：PowerPoint 原生形状或可编辑 freeform
 - UI 按钮：按钮背景、图标、文字分层独立可编辑
 
-### 生图资产门禁
+### 生图资产约束
 
 图标、pictogram、装饰城市线稿、复杂徽章、tiny glyph、插画片段等最终资产必须来自 image generation model。
 
@@ -274,7 +274,7 @@ python scripts/check_rebuild_assets.py --asset-dir path/to/assets
 
 | Milestone | Focus |
 | --- | --- |
-| v0.1 | 固化生图资产门禁、CJK 字体规则、基础可编辑复刻流程 |
+| v0.1 | 固化生图资产约束、CJK 字体规则、基础可编辑复刻流程 |
 | v0.2 | 增强图标网格检测、asset manifest、局部 crop QA |
 | v0.3 | 强化多页 PPTX / PDF 输入，形成稳定的 page-by-page assembly |
 | v1.0 | 建立可复用复刻协议：输入解析、资产生成、PPT 重建、渲染校准、最终交付 |
