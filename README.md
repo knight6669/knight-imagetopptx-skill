@@ -153,7 +153,7 @@ source page
 - 相邻 cell 残片混入目标图标
 - 棋盘格背景透明化时误删边缘
 
-skill 要求先检测真实内容网格，再切割，并输出 grid alignment report。若单个图标在源图中已经被截断，则不能靠缩放掩盖，应重新单独生成该资产。
+skill 要求生成网格时就保证每个图标完整落在各自 cell 的 safe zone 内，不截断、不溢出、不跨格；再检测真实内容网格后切割，并输出 grid alignment report。
 
 ## 安装
 
