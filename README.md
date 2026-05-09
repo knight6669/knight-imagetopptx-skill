@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/skill-banner.png" alt="Knight ImageToPPTX Skill banner" width="100%" />
+  <img src="assets/skill-banner.svg" alt="Knight ImageToPPTX Skill banner" width="100%" />
 </p>
 
 <h1 align="center">Knight ImageToPPTX Skill</h1>
@@ -223,7 +223,7 @@ knight-imagetopptx-skill/
 ├─ scripts/
 │  └─ check_rebuild_assets.py
 └─ assets/
-   ├─ skill-banner.png
+   ├─ skill-banner.svg
    ├─ 原图1.png
    ├─ 效果1.png
    ├─ 原图2.png
