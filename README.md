@@ -221,7 +221,8 @@ knight-imagetopptx-skill/
 ├─ LICENSE
 ├─ agents/
 ├─ scripts/
-│  └─ check_rebuild_assets.py
+│  ├─ check_rebuild_assets.py
+│  └─ ppt_text_fit.py
 └─ assets/
    ├─ skill-banner.svg
    ├─ 原图1.png
