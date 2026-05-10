@@ -12,6 +12,7 @@ import argparse
 import json
 import math
 import re
+import sys
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -188,6 +189,10 @@ def best_fit(args) -> dict:
 
 
 def main() -> None:
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
     parser = argparse.ArgumentParser()
     parser.add_argument("--text", required=True)
     parser.add_argument("--box", required=True, help="Target box in exported pixels, e.g. 780x42")
