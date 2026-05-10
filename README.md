@@ -49,6 +49,12 @@
 | <img src="assets/原图1.png" alt="Source slide 1" /> | <img src="assets/效果1.png" alt="Rebuilt editable PPT effect 1" /> |
 | <img src="assets/原图2.png" alt="Source slide 2" /> | <img src="assets/效果2.png" alt="Rebuilt editable PPT effect 2" /> |
 
+### Agent Landscape 复刻对比
+
+<p align="center">
+  <img src="assets/agent-landscape-before-after-comparison.png" alt="Agent Landscape before and after comparison" width="100%" />
+</p>
+
 ### 元素可编辑状态
 
 复刻结果保留对象级编辑能力：文本、表格、卡片、按钮、图标和复杂视觉资产都可以在 PowerPoint 中独立选中、移动和二次调整。
@@ -85,6 +91,7 @@ skill使用通用 `C×R` 规则网格对齐：
 - 每个图标居中在自己的 cell center
 - 图标限制在 cell 中央 55-65% safe zone
 - 每个 cell 内保留至少 20-25% 空白 padding
+- 透明切割使用每格边缘采样的自适应 chroma-key，避免单一阈值造成浅色底块或半透明边缘污染
 
 切图时先检测真实内容网格，再根据 row/column centers 计算 cell edges，避免从 `(0,0)` 用 `image_width / C` 硬切导致图标截断。
 
@@ -107,7 +114,7 @@ skill使用通用 `C×R` 规则网格对齐：
 | 01 · 输入规整 | 接收图片、图片版 PPTX 或 PDF；渲染/排序为逐页参考图 | 记录页码、尺寸、比例、源文件 |
 | 02 · 视觉盘点 | 拆出标题、正文、表格、卡片、按钮、箭头、图标、背景区域 | 为每个非文本对象分配稳定 asset id |
 | 03 · 资产分类 | 标记 `native_editable` 与 `imagegen_asset` | 图标和复杂视觉必须进入生图门禁 |
-| 04 · 资产生成 | 用生图模型生成独立透明 PNG；必要时做 alpha 清理和网格切割 | 输出 contact sheet 与 grid alignment report |
+| 04 · 资产生成 | 用生图模型生成独立透明 PNG；必要时做 alpha 清理和网格切割 | 使用每格边缘采样 chroma-key，输出 contact sheet 与 grid alignment report |
 | 05 · PPT 重建 | 用原生 PPT 对象重建文本、表格、卡片、线条和可编辑结构 | 保持图层、命名、位置和比例可维护 |
 | 06 · 渲染校准 | 导出 PPTX 为 PNG，和原图做全页及局部裁图对比 | 修正截断、换行、边距、阴影、字体和对齐 |
 | 07 · 多页装配 | 多页输入按原始顺序合并为一个 PPTX | 每页都有独立 QA 证据，不用粗略套模板 |
@@ -154,6 +161,19 @@ source page
 - 棋盘格背景透明化时误删边缘
 
 skill 要求生成网格时就保证每个图标完整落在各自 cell 的 safe zone 内，不截断、不溢出、不跨格；再检测真实内容网格后切割，并输出 grid alignment report。
+
+### Adaptive chroma-key
+
+生成式图标表即使要求纯品红 `#FF00FF` 背景，也可能出现轻微色差、抗锯齿边缘或局部渐变。skill 因此要求透明化时按每个 cell 单独采样边缘背景，而不是整张表共用一个固定阈值。
+
+处理规则：
+
+- 对每个 `C×R` / `N×M` cell 独立采样外圈边缘像素
+- 用边缘像素的高分位 magenta 色距加安全边距，得到该 cell 的本地背景阈值
+- 在窄距离带内渐变 alpha，并清零低残留 alpha
+- 只保留真实图标内容，再按 alpha bbox 和 alpha 视觉质心重打包到透明方形画布
+
+这样可以减少浅蓝/浅灰底块、半透明 halo、边缘污染和不同网格尺寸复用时的阈值漂移。
 
 ## 安装
 
@@ -241,6 +261,7 @@ knight-imagetopptx-skill/
    ├─ 元素可编辑状态复刻截图1.png
    ├─ 元素可编辑状态复刻截图2.png
    ├─ comparison.png
+   ├─ agent-landscape-before-after-comparison.png
    ├─ asset_contact_regenerated_grid资产联系图.png
    └─ new_sheet_projection_runs.png
 ```
@@ -261,7 +282,7 @@ python scripts/check_rebuild_assets.py --asset-dir path/to/assets
 
 完成交付前至少检查：
 
-- 图标没有截断、残片和透明边缘污染
+- 图标没有截断、残片、浅色底块和透明边缘污染
 - 中文字体没有回退到宋体或发生异常换行
 - 表格、卡片、按钮和流程箭头保持可编辑
 - 多页输入中每一页都有独立渲染校准
