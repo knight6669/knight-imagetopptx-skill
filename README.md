@@ -49,12 +49,6 @@
 | <img src="assets/原图1.png" alt="Source slide 1" /> | <img src="assets/效果1.png" alt="Rebuilt editable PPT effect 1" /> |
 | <img src="assets/原图2.png" alt="Source slide 2" /> | <img src="assets/效果2.png" alt="Rebuilt editable PPT effect 2" /> |
 
-### Agent Landscape 复刻对比
-
-<p align="center">
-  <img src="assets/agent-landscape-before-after-comparison.png" alt="Agent Landscape before and after comparison" width="100%" />
-</p>
-
 ### 元素可编辑状态
 
 复刻结果保留对象级编辑能力：文本、表格、卡片、按钮、图标和复杂视觉资产都可以在 PowerPoint 中独立选中、移动和二次调整。
@@ -261,7 +255,6 @@ knight-imagetopptx-skill/
    ├─ 元素可编辑状态复刻截图1.png
    ├─ 元素可编辑状态复刻截图2.png
    ├─ comparison.png
-   ├─ agent-landscape-before-after-comparison.png
    ├─ asset_contact_regenerated_grid资产联系图.png
    └─ new_sheet_projection_runs.png
 ```
