@@ -46,8 +46,8 @@
 
 | 原图 | 可编辑复刻效果 |
 | --- | --- |
-| <img src="assets/原图1.png" alt="Source slide 1" /> | <img src="assets/效果1.png" alt="Rebuilt editable PPT effect 1" /> |
-| <img src="assets/原图2.png" alt="Source slide 2" /> | <img src="assets/效果2.png" alt="Rebuilt editable PPT effect 2" /> |
+| <img src="assets/reference-slide-01.png" alt="Source slide 1" /> | <img src="assets/rebuilt-slide-01.png" alt="Rebuilt editable PPT effect 1" /> |
+| <img src="assets/reference-slide-02.png" alt="Source slide 2" /> | <img src="assets/rebuilt-slide-02.png" alt="Rebuilt editable PPT effect 2" /> |
 
 ### 元素可编辑状态
 
@@ -55,7 +55,7 @@
 
 | 可编辑状态 1 | 可编辑状态 2 |
 | --- | --- |
-| <img src="assets/元素可编辑状态复刻截图1.png" alt="Editable element state screenshot 1" /> | <img src="assets/元素可编辑状态复刻截图2.png" alt="Editable element state screenshot 2" /> |
+| <img src="assets/editable-elements-01.png" alt="Editable element state screenshot 1" /> | <img src="assets/editable-elements-02.png" alt="Editable element state screenshot 2" /> |
 
 ## 核心能力
 
@@ -138,7 +138,7 @@ source page
 每个复杂图标都作为独立透明 PNG 资产插入 PPT，便于单独替换、缩放和排查边缘裁切问题。
 
 <p align="center">
-  <img src="assets/asset_contact_regenerated_grid资产联系图.png" alt="Generated asset contact sheet" width="72%" />
+  <img src="assets/asset-contact-regenerated-grid.png" alt="Generated asset contact sheet" width="72%" />
 </p>
 
 ### Content-grid cutting
@@ -248,14 +248,16 @@ knight-imagetopptx-skill/
 │  └─ ppt_text_fit.py
 └─ assets/
    ├─ skill-banner.svg
-   ├─ 原图1.png
-   ├─ 效果1.png
-   ├─ 原图2.png
-   ├─ 效果2.png
-   ├─ 元素可编辑状态复刻截图1.png
-   ├─ 元素可编辑状态复刻截图2.png
+   ├─ reference-slide-01.png
+   ├─ rebuilt-slide-01.png
+   ├─ rebuilt-slide-01.pptx
+   ├─ reference-slide-02.png
+   ├─ rebuilt-slide-02.png
+   ├─ rebuilt-slide-02.pptx
+   ├─ editable-elements-01.png
+   ├─ editable-elements-02.png
    ├─ comparison.png
-   ├─ asset_contact_regenerated_grid资产联系图.png
+   ├─ asset-contact-regenerated-grid.png
    └─ new_sheet_projection_runs.png
 ```
 
