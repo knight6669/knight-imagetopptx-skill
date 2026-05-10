@@ -193,6 +193,12 @@ def main() -> None:
         sys.stdout.reconfigure(encoding="utf-8")
     except Exception:
         pass
+    argv = sys.argv[1:]
+    if "--text" in argv:
+        idx = argv.index("--text")
+        if idx + 1 < len(argv):
+            argv[idx] = f"--text={argv[idx + 1]}"
+            del argv[idx + 1]
     parser = argparse.ArgumentParser()
     parser.add_argument("--text", required=True)
     parser.add_argument("--box", required=True, help="Target box in exported pixels, e.g. 780x42")
@@ -207,7 +213,7 @@ def main() -> None:
     parser.add_argument("--render-fudge", type=float, default=1.01)
     parser.add_argument("--slide-px", default="1672x941")
     parser.add_argument("--slide-in", default="13.333333x7.505")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     print(json.dumps(best_fit(args), ensure_ascii=False, indent=2))
 
 
