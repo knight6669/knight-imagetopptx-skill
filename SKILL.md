@@ -24,6 +24,26 @@ Rebuild the slide semantically so the parts the user needs to edit are practical
 - Icons, pictograms, complex badges, decorative marks, tiny UI glyphs, and illustration-like elements: **must be generated with the image generation model as independent transparent PNG assets**, then inserted into the PPTX.
 - Source-image crops are reference material only. Do not use cropped screenshot fragments as final icon assets unless the user explicitly provides a real logo/brand mark that must remain exact.
 
+## Mandatory Execution Contract
+
+When this skill is triggered, the workflow below is binding, not optional guidance. Do not jump directly from screenshot to PPTX, and do not deliver a file unless the required evidence exists.
+
+Before building, create or update a small execution record in the working folder, such as `rebuild_execution_report.json` or equivalent notes. It must track the status of these required phases:
+
+- `input_prepared`: source path, slide/page count, slide size, aspect ratio, and output target recorded.
+- `visual_inventory_done`: major text blocks, native objects, connectors, tables, cards, icons, and complex visuals listed with stable IDs.
+- `asset_classification_done`: every non-text visual marked as `native_editable` or `imagegen_asset`.
+- `imagegen_assets_done`: every `imagegen_asset` has an image-generation source, final transparent PNG, manifest entry, and contact sheet or crop QA.
+- `text_fit_done`: every visible PPT text object has `ppt_text_fit.py` evidence or a recorded exception.
+- `pptx_built`: editable PPTX generated with native text/shapes and independent image assets.
+- `render_qa_done`: PPTX rendered to PNG and compared against the reference at full-page level.
+- `local_crop_qa_done`: tight regions such as icon buttons, dense cards, tables, labels, bottom bars, and user-flagged areas cropped and inspected.
+- `validation_done`: asset checker and relevant script/compile checks run, or blockers recorded.
+
+If any phase cannot be completed, stop and report the blocker instead of silently skipping it. If the user asks for speed or a rough pass, still perform the minimum execution record, asset manifest, rendered preview, and validation; mark the result as draft if QA is intentionally incomplete.
+
+Final answers must include the PPTX path and the most important evidence paths, normally rendered preview, asset contact sheet, text-fit report, and notable crop QA. Do not claim completion from code generation alone.
+
 ## Non-Negotiable Image-Generation Gate
 
 **Final icon and complex-visual assets must come from the image generation model.** Do not hand-draw, script-generate, trace, or approximate final icons with PIL, SVG, canvas, icon fonts, manually authored vector paths, or PowerPoint shape drawings. Those methods are allowed only for native editable primitives such as cards, lines, arrows, tables, separators, simple badges, and text containers.
@@ -44,6 +64,7 @@ If the image generation tool is unavailable, blocked, or fails repeatedly, stop 
    - If the input is image-only PPTX or PDF, render/export each page/slide to PNG first and treat each rendered page as a reference image.
    - If the input is multiple images, preserve their order and treat each image as one target slide.
    - Record slide size, aspect ratio, source filenames/page numbers, and output path.
+   - Start the execution record required by the Mandatory Execution Contract and keep it updated as phases complete.
    - For multi-page inputs, each page is an independent single-slide rebuild task. Do not build page 2 by copying page 1 and making rough edits unless the visual page is genuinely repeated and the render check confirms it.
 
 2. **Inventory the page**
@@ -118,6 +139,7 @@ Use the returned `recommended_pt` and `lines` to set the first PPT build, and sa
 - **Role text hierarchy:** keep font sizes flexible and derived from the reference page, not fixed numeric ranges. Preserve the relative hierarchy between title, subtitle, card titles, table headers, table body, tool names, labels, and notes. If text only fits by becoming visibly weaker than peer text in the same role, adjust geometry, margins, columns, or wrapping instead of silently accepting tiny text.
 - **Overflow guards:** table body text should stay inside its own cell with at least 10-16 px visual padding from vertical grid lines. Card text should reserve icon space first, then fit only in the remaining text area. For one-line reference labels, do not allow accidental wrapping; for multi-line reference labels, match the observed line count and line spacing. Treat mixed CJK/Latin labels such as `看 diff、看运行结果` as wider than CJK-only text and give them extra width or a smaller role-consistent size before rendering.
 - **Card text centering:** for pills, buttons, workflow cards, and icon+label cards, align the text box to the full intended visual slot and set vertical anchoring to middle (`MSO_ANCHOR.MIDDLE` or equivalent). Do not place a smaller text box by eyeballing baseline position. Card body text should be vertically centered within its reserved area when the reference is centered, with line count and line spacing matching the reference.
+- **Reserved trend/arrow slots:** for compact metric rows such as `同比 +76.82% ↑`, divide the row into explicit label, value, and arrow/icon slots before fitting text. The fitted text bbox must exclude the arrow slot; the arrow should be anchored inside its own reserved slot with enough padding from the card edge. Do not place trend arrows by absolute x-offsets that can overlap longer percentages or mixed number/unit runs. Render a local crop for these dense rows before delivery.
 - **Responsive card layout:** repeated cards may need per-card geometry overrides. Do not force one divider position, text offset, or body width formula across all cards when titles or mixed Chinese/English body text differ. Adjust divider x-position, body box width, icon slot, and title/body font scale per card, then verify with local crops.
 - **Undersize guards:** if fitted text uses little of the available width and looks visibly smaller than neighboring peer labels, raise it toward the peer/reference scale. Avoid overcorrecting from overflow into a weak, under-scaled table.
 - **Chroma-key icon sheets:** for icon sheets, prefer a solid pure magenta `#FF00FF` source background over checkerboard or near-white backgrounds. Chroma-key by color distance, preserve intentional white internal details only for assets that need them, then output true RGBA PNGs. For generated `C×R` / `N×M` sheets, compute the keying threshold per cell from that cell's edge pixels instead of using one global fixed threshold; use a high edge-distance percentile plus margin as the local background cutoff, fade to full alpha over a narrow distance band, and zero out low residual alpha. Keep the magenta source sheet in `assets/source/`; do not leave source sheets in the final asset directory used by `check_rebuild_assets.py`.
@@ -127,9 +149,12 @@ Use the returned `recommended_pt` and `lines` to set the first PPT build, and sa
 - **Icon color fidelity:** first-pass image-generation prompts must include exact visual color roles from the reference. For each asset, specify foreground color, background or host shape color when relevant, and whether the color belongs to the icon or to its container. If a grid mixes colors, specify each cell's colors explicitly. A color-mismatched icon is an invalid asset and should be regenerated or replaced by a correctly colored image-generation-derived variant before PPT insertion.
 - **Content-grid cutting:** for generated asset sheets with outer margins, do not cut by `image_width / C` and `image_height / R` from `(0,0)` unless the prompt deliberately produced a full-sheet uniform grid with no outer margin ambiguity. Prefer detecting the actual `C×R` / `N×M` content grid first, e.g. with chroma-key foreground projection runs or another color/alpha mask, verify exactly the requested column and row bands, derive row/column centers, compute cell edges from center midpoints, then cut. Save detected edges and padding failures to a grid alignment report.
 - **Rounded rectangles:** after creating `ROUNDED_RECTANGLE`, set `shape.adjustments[0]`; use smaller values for large panels (`0.025-0.04`) and slightly larger values for pills/buttons (`0.06-0.10`).
+- **Effect hygiene:** PowerPoint shapes, pictures, charts, and connectors can inherit theme effects even when the reference is flat. After creating every shape class, explicitly clear shadow, glow, soft-edge, reflection, and effect-list XML unless the source visibly requires that effect. Run a final slide-level effect cleanup before saving, then verify the PPTX XML has no unexpected `outerShdw`, `glow`, `softEdge`, or `reflection` nodes.
+- **Line restraint:** do not add divider lines, connector strokes, or panel borders just because they help construction. Every line must correspond to a visible reference line or a needed native boundary. Match line weight and opacity conservatively; if a line reads as darker than the screenshot, reduce width/color instead of accepting a visual grid that was not in the source.
 - **Tool buttons:** compose each button from a native rounded rectangle, `add_picture(icon_id, ...)`, and `add_text(label, ...)`. Tune icon slot, text offset, and font size per label.
 - **Wide icon slots:** magnifier, loop, sync, person-loop, and arrow-heavy icons often have a much wider transparent canvas or handle than square symbols. In tight cards, give these icons smaller/lower-left slots or a dedicated variant so both the visible icon and the PPT selection box stay clear of text.
 - **Smooth arc arrows:** when using open freeform curves, build each visible arc as one path with native line styling and native arrowhead, not many separate line shapes. Use a high internal coordinate scale before converting to PPT coordinates so PowerPoint's integer path coordinates do not create jagged or stepped arcs. Prefer rounded line caps/joins when available, and group related arc paths after creation.
+- **Pie/doughnut center alignment:** for pie or doughnut charts with a center circle, center label, or hollow overlay, derive the overlay center from the native chart/plot bbox or the detected rendered ring center. The center circle, center text box, and hole must share the same center coordinates. Do not eyeball these overlays after moving or resizing the chart. Include a local crop proving the center overlay is concentric with the ring and that leader labels do not crowd the hole.
 - **Layer-order pass:** after building and grouping, classify shapes into text, image assets, and native objects. Generate with the principle **"preserve native internal order, only lift icons and text"**. Preserve the existing internal order of native objects unless a specific mismatch requires a local fix; do not blindly send every native object to the back, because this can hide colored pills, center fills, or foreground lines behind white panels/rings. Bring image assets/icons forward, then bring all text boxes/text shapes to the very front. Preserve intentionally grouped native visuals as one object, but keep them in the native-object layer unless they are icons.
 - **Local crop QA:** after rendering, crop suspicious regions with PIL and inspect them separately. Do this before final delivery when a slide has tight labels, right-side tool grids, or bottom feedback bars.
 - **Asset manifest proof:** include for every `imagegen_asset` its prompt summary, generated source path when available, final PNG path, and any cleanup/cutting operation. If an asset has no image-generation source, it is not a valid final icon/complex asset.
@@ -142,6 +167,7 @@ python scripts/check_rebuild_assets.py --asset-dir path/to/assets
 ```
 
    - Open or inspect the rendered PNG before claiming completion.
+   - Confirm the execution record has no incomplete required phase unless the final answer explicitly labels the output as a draft and explains the missing evidence.
 
 ## Lessons From Real Repairs
 
@@ -172,6 +198,10 @@ python scripts/check_rebuild_assets.py --asset-dir path/to/assets
 - For rounded dashed feedback loops, first try a single editable open freeform path with PPT native dashed line styling and a native tail arrow. This gives the cleanest selection pane and preserves editability. PowerPoint's built-in connector types are only straight/elbow/curve, so use a freeform path when the loop needs multiple bends. If that renders poorly, fall back to whole native dashed connectors for straight runs and segmented elbows only.
 - Card and pill labels should be centered by geometry, not by visual luck. Use the full pill/card text slot with middle vertical anchoring, then render a crop; if the text appears high/low or clipped, fix the text box and anchoring before changing font size.
 - Text overflow must be treated as a layout bug, even if it is only a few pixels beyond a card border. For repeated cards, tune each card's divider, body width, and mixed-language text size independently rather than shrinking every peer card.
+- Dense metric cards with trend arrows are overlap-prone. Reserve an arrow slot first, fit the label/value only in the remaining text box, and check a crop whenever the reference has long percentages, signs, units, or up/down arrows in the same row.
+- Doughnut and pie center overlays should be computed from the chart or plot center, not nudged by eye. After changing chart size, hole size, or callout labels, re-center the overlay circle and text from the same coordinate source and verify with a tight crop.
+- Theme effects are a hidden source of false fidelity. If the source is mostly flat, clear default shadows and effects globally; a subtle PowerPoint shadow can make cards, arrows, and headers look like extra objects.
+- Extra construction lines are defects, not harmless decoration. Keep separators and helper borders only when the reference visibly contains them, and tune weight/color from a rendered crop.
 - Z-order is part of fidelity. If text seems clipped, dim, or hidden, inspect the selection pane/layer order before changing content. The default final stack should be text, then icons/images, then native containers/arrows/lines, while preserving the native layer's own internal foreground/background order.
 - When an output PPTX is open and locked, write a new versioned filename instead of killing the user's app or overwriting their open file.
 
