@@ -5,7 +5,7 @@
 <h1 align="center">Knight ImageToPPTX Skill</h1>
 
 <p align="center">
-  <strong>把截图、图片型 PPTX、PDF 页面复刻成对象级可编辑的 PowerPoint。</strong>
+  <strong>把图片、图片型 PPTX、PDF 页面复刻成对象级可编辑的 PowerPoint。</strong>
 </p>
 
 <p align="center">
