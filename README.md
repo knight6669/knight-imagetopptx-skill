@@ -69,11 +69,21 @@
 - 流程箭头/连接线：PowerPoint 原生形状或可编辑 freeform
 - UI 按钮：按钮背景、图标、文字分层独立可编辑
 
+### 箭头几何保真
+
+箭头不是只有方向。对非直线箭头，复刻时必须同时保留起点、终点、路径类型、回折侧、线宽或填充厚度，以及与标签的相对关系。
+
+- 粗实心流程箭头使用原生填充箭头形状
+- 细线连接使用连接线或连续 freeform 路径
+- U 形、弯钩、回流、反馈和注释箭头先记录 `tail -> head`、`straight / elbow / arc / U-turn / hook / loop` 等路径类型
+- 内置 U 形或弯钩箭头必须在目标尺寸下比较 `0° / 90° / 180° / 270°` 四种方向；默认方向不能作为最终依据
+- 箭头与其附近标签作为一个视觉组件，必须用同一局部裁图对照原图
+
 ### 生图资产约束
 
 图标、pictogram、装饰城市线稿、复杂徽章、tiny glyph、插画片段等最终资产必须来自 image generation model。
 
-脚本只负责后处理：切片、透明化、alpha 重打包、边缘清理和插入 PPT。禁止把 PIL / SVG / canvas / 手写路径 / PowerPoint 形状伪装成最终图标资产。
+脚本只负责后处理：基于原生 alpha 的切片、alpha 重打包、边缘检查和插入 PPT。禁止把 PIL / SVG / canvas / 手写路径 / PowerPoint 形状伪装成最终图标资产。
 
 ### 通用 C×R / N×N 对齐
 
@@ -85,7 +95,8 @@ skill使用通用 `C×R` 规则网格对齐：
 - 每个图标居中在自己的 cell center
 - 图标限制在 cell 中央 55-65% safe zone
 - 每个 cell 内保留至少 20-25% 空白 padding
-- 透明切割使用每格边缘采样的自适应 chroma-key，避免单一阈值造成浅色底块或半透明边缘污染
+- 生成结果必须是原生 RGBA：透明角、非空 alpha bbox、主体覆盖均需验证
+- 切割使用原生 alpha 前景蒙版，不对已透明资产进行二次透明化处理
 
 切图时先检测真实内容网格，再根据 row/column centers 计算 cell edges，避免从 `(0,0)` 用 `image_width / C` 硬切导致图标截断。
 
@@ -106,11 +117,11 @@ skill使用通用 `C×R` 规则网格对齐：
 | 阶段 | Codex 执行内容 | 质量约束 |
 | --- | --- | --- |
 | 01 · 输入规整 | 接收图片、图片版 PPTX 或 PDF；渲染/排序为逐页参考图 | 记录页码、尺寸、比例、源文件 |
-| 02 · 视觉盘点 | 拆出标题、正文、表格、卡片、按钮、箭头、图标、背景区域 | 为每个非文本对象分配稳定 asset id |
+| 02 · 视觉盘点 | 拆出标题、正文、表格、卡片、按钮、箭头、图标、背景区域 | 为每个非文本对象分配稳定 asset id；非直线箭头记录尾端、头端、路径类型、回折侧和关联标签 |
 | 03 · 资产分类 | 标记 `native_editable` 与 `imagegen_asset` | 图标和复杂视觉必须进入生图门禁 |
-| 04 · 资产生成 | 用生图模型生成独立透明 PNG；必要时做 alpha 清理和网格切割 | 使用每格边缘采样 chroma-key，输出 contact sheet 与 grid alignment report |
+| 04 · 资产生成 | 用生图模型生成独立透明 PNG；验证 alpha 后做网格切割与重打包 | 保留原生 alpha，输出 contact sheet 与 grid alignment report |
 | 05 · PPT 重建 | 用原生 PPT 对象重建文本、表格、卡片、线条和可编辑结构 | 保持图层、命名、位置和比例可维护 |
-| 06 · 渲染校准 | 导出 PPTX 为 PNG，和原图做全页及局部裁图对比 | 修正截断、换行、边距、阴影、字体和对齐 |
+| 06 · 渲染校准 | 导出 PPTX 为 PNG，和原图做全页及局部裁图对比 | 修正截断、换行、边距、阴影、字体、对齐，以及回流/注释箭头的路径几何 |
 | 07 · 多页装配 | 多页输入按原始顺序合并为一个 PPTX | 每页都有独立 QA 证据，不用粗略套模板 |
 
 ### QA Trace
@@ -126,6 +137,7 @@ source page
   -> rebuilt PPTX
   -> rendered preview
   -> local crop QA
+  -> arrow-label crop QA
   -> corrected final PPTX
 ```
 
@@ -152,22 +164,22 @@ source page
 - 外圈留白导致硬切错位
 - edge cell 源图被模型画到边界外
 - 相邻 cell 残片混入目标图标
-- 棋盘格背景透明化时误删边缘
+- 原生 alpha 边缘或透明 padding 不符合要求
 
 skill 要求生成网格时就保证每个图标完整落在各自 cell 的 safe zone 内，不截断、不溢出、不跨格；再检测真实内容网格后切割，并输出 grid alignment report。
 
-### Adaptive chroma-key
+### Native Alpha Validation
 
-生成式图标表即使要求纯品红 `#FF00FF` 背景，也可能出现轻微色差、抗锯齿边缘或局部渐变。skill 因此要求透明化时按每个 cell 单独采样边缘背景，而不是整张表共用一个固定阈值。
+生图模型现在直接输出透明 PNG。skill 将原生 alpha 视为资产的一部分，而不是待清理的背景：生成后立即验证 RGBA 模式、四角透明、非空 alpha bbox、主体覆盖和最小透明 padding；验证通过后保留原始 alpha，再按网格切片与视觉质心重打包。
 
 处理规则：
 
-- 对每个 `C×R` / `N×M` cell 独立采样外圈边缘像素
-- 用边缘像素的高分位 magenta 色距加安全边距，得到该 cell 的本地背景阈值
-- 在窄距离带内渐变 alpha，并清零低残留 alpha
-- 只保留真实图标内容，再按 alpha bbox 和 alpha 视觉质心重打包到透明方形画布
+- 验证 PNG 为 RGBA，四角 alpha 为 0，且 alpha bbox 非空
+- 用 alpha 前景蒙版检测真实的 `C×R` / `N×M` 内容中心和 cell 边界
+- 每个 cell 只输出一个语义资产，并保留至少 10 px 透明安全边距
+- 按 alpha bbox 和 alpha 视觉质心重打包到透明方形画布
 
-这样可以减少浅蓝/浅灰底块、半透明 halo、边缘污染和不同网格尺寸复用时的阈值漂移。
+这样能保护抗锯齿边缘，也能减少浅色底块、透明 halo 和不同网格尺寸复用时的切图漂移。
 
 ## 安装
 
@@ -280,6 +292,7 @@ python scripts/check_rebuild_assets.py --asset-dir path/to/assets
 - 图标没有截断、残片、浅色底块和透明边缘污染
 - 中文字体没有回退到宋体或发生异常换行
 - 表格、卡片、按钮和流程箭头保持可编辑
+- 非直线箭头的头向、回折侧、路径、线宽和关联标签均与参考裁图一致
 - 多页输入中每一页都有独立渲染校准
 - 最终文件是一个完整 `.pptx`，而不是零散单页文件
 
