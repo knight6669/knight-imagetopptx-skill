@@ -185,6 +185,35 @@ def best_fit(args) -> dict:
         "height_safety": args.height_safety,
         "render_fudge": args.render_fudge,
     }
+    best["utilization"] = {
+        "width": round(best["width_px"] / box_w, 4) if box_w else 0.0,
+        "height": round(best["height_px"] / box_h, 4) if box_h else 0.0,
+    }
+    if args.target_pt is not None:
+        target = measure(
+            args.text,
+            args.target_pt,
+            font_path,
+            px_per_pt,
+            box_w,
+            args.line_spacing,
+            args.width_safety,
+            args.render_fudge,
+        )
+        target["fits"] = (
+            target["width_px"] <= box_w * args.width_safety
+            and target["height_px"] <= box_h * args.height_safety
+            and (args.max_lines <= 0 or target["line_count"] <= args.max_lines)
+        )
+        target["required_box_px"] = [
+            math.ceil(target["width_px"] / args.width_safety),
+            math.ceil(target["height_px"] / args.height_safety),
+        ]
+        target["box_deficit_px"] = [
+            max(0, target["required_box_px"][0] - box_w),
+            max(0, target["required_box_px"][1] - box_h),
+        ]
+        best["target"] = target
     return best
 
 
@@ -211,6 +240,7 @@ def main() -> None:
     parser.add_argument("--width-safety", type=float, default=0.92)
     parser.add_argument("--height-safety", type=float, default=0.95)
     parser.add_argument("--render-fudge", type=float, default=1.01)
+    parser.add_argument("--target-pt", type=float, help="Reference point size to diagnose box deficits before shrinking text")
     parser.add_argument("--slide-px", default="1672x941")
     parser.add_argument("--slide-in", default="13.333333x7.505")
     args = parser.parse_args(argv)
